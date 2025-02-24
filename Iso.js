@@ -1,9 +1,10 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 //scale of individual grids.
 const gridsize = 100;
-//the width and height of the set of grids.
 //actual grid set size = islandSize*islandSize.
-let islandSize = 5;
+let islandSize = 3;
+//a float between 0-. the angle at which the camera veiws the island.
+let angleRatio = 0.5;
 
 let rotation = 0;
 //Initial x/y:iHat/jHat
@@ -41,22 +42,17 @@ class Tile{
             quad(a[0],a[1], a[0],a[1]+g, b[0],b[1]+g, b[0],b[1]);
             quad(c[0],c[1], c[0],c[1]+g, d[0],d[1]+g, d[0],d[1]);
             quad(c[0],c[1], c[0],c[1]+g, b[0],b[1]+g, b[0],b[1]);
+            stroke(this.mouseHover() ? [255, 255, 0] : [20, 220, 50]);
             fill(this.mouseHover() ? [255, 255, 0] : [20, 220, 50]);
             quad(a[0],a[1], b[0],b[1], c[0],c[1], d[0],d[1]);
             fill(255,0,0);
-            strokeWeight(10)
             pop();
         }
     }
     mouseHover() {
-        // Adjust mouse position to remove the canvas translation
         let mx = mouseX - width / 2;
         let my = mouseY - height / 2;
-
-        // Convert screen coordinates to grid coordinates
         let [tx, ty] = reverseMatrix(mx, my);
-
-        // Check if the transformed mouse position is inside this tile
         return (
             tx >= this.x - gridsize / 2 &&
             tx <= this.x + gridsize / 2 &&
@@ -94,8 +90,8 @@ function rotateIsland(speed){
       if (keyIsDown(68)) {
         rotation += speed;
     }
-    iHat = [cos(radians(rotation)),sin(radians(rotation))/2];
-    jHat = [-sin(radians(rotation)),cos(radians(rotation))/2];
+    iHat = [cos(radians(rotation)),sin(radians(rotation))*angleRatio];
+    jHat = [-sin(radians(rotation)),cos(radians(rotation))*angleRatio];
     tiles.sort((a, b) => {
         let ay = Matrix(a.x, a.y)[1];
         let by = Matrix(b.x, b.y)[1];
