@@ -1,0 +1,119 @@
+document.addEventListener('contextmenu', event => event.preventDefault());
+//scale of individual grids.
+const gridsize = 100;
+//the width and height of the set of grids.
+//actual grid set size = islandSize*islandSize.
+let islandSize = 5;
+
+let rotation = 0;
+//Initial x/y:iHat/jHat
+/*Written as a vector   |M1|
+M1/M2|run/rise          |M2|
+*/
+//expected ratios of iHat at 45 degrees[1,0.5]
+//expected ratios of iHat at 0 degrees:[1,0]
+let iHat = [1,0];
+//expected ratios of jHat at 45 degrees[-1,0.5]
+//expected ratios of jHat at 0 degrees:[0,.5]
+let jHat = [0,.5];
+
+let tiles =[];
+class Tile{
+    constructor(){
+        this.x = 0;
+        this.y = 0;
+        //types should include: land,water,elevation,slope
+        this.type = "land";
+    }
+    draw(){
+        let g = gridsize/2;
+        let a = Matrix(this.x-g,this.y-g);
+        let b = Matrix(this.x-g,this.y+g);
+        let c = Matrix(this.x+g,this.y+g);
+        let d = Matrix(this.x+g,this.y-g);
+        if (this.type=="water"){
+
+        } else {
+            push();
+            noStroke();
+            fill(20,120,50);
+            quad(a[0],a[1], a[0],a[1]+g, d[0],d[1]+g, d[0],d[1]);
+            quad(a[0],a[1], a[0],a[1]+g, b[0],b[1]+g, b[0],b[1]);
+            quad(c[0],c[1], c[0],c[1]+g, d[0],d[1]+g, d[0],d[1]);
+            quad(c[0],c[1], c[0],c[1]+g, b[0],b[1]+g, b[0],b[1]);
+            fill(this.mouseHover() ? [255, 255, 0] : [20, 220, 50]);
+            quad(a[0],a[1], b[0],b[1], c[0],c[1], d[0],d[1]);
+            fill(255,0,0);
+            strokeWeight(10)
+            pop();
+        }
+    }
+    mouseHover() {
+        // Adjust mouse position to remove the canvas translation
+        let mx = mouseX - width / 2;
+        let my = mouseY - height / 2;
+
+        // Convert screen coordinates to grid coordinates
+        let [tx, ty] = reverseMatrix(mx, my);
+
+        // Check if the transformed mouse position is inside this tile
+        return (
+            tx >= this.x - gridsize / 2 &&
+            tx <= this.x + gridsize / 2 &&
+            ty >= this.y - gridsize / 2 &&
+            ty <= this.y + gridsize / 2
+        );
+    }
+}
+function Matrix(x,y){
+    let r = [x*iHat[0] + y*jHat[0], x*iHat[1] + y*jHat[1]];
+    return r;
+}
+function reverseMatrix(x, y) {
+    let det = iHat[0] * jHat[1] - iHat[1] * jHat[0]; 
+    return det === 0 ? [0, 0] : [(x * jHat[1] - y * jHat[0]) / det, (-x * iHat[1] + y * iHat[0]) / det];
+}
+function genTiles(){
+    let c = 0;
+    for(let i = 0; i < (islandSize * islandSize); i++){
+        tiles[i] = new Tile();
+        if (i % islandSize == 0 && i !== 0) {
+            c++;
+        }
+        let xOffset = (islandSize - 1) * gridsize / 2;
+        let yOffset = (islandSize - 1) * gridsize / 2; 
+        
+        tiles[i].x = (i % islandSize) * gridsize - xOffset;
+        tiles[i].y = c * gridsize - yOffset;
+    }
+}
+function rotateIsland(speed){
+    if (keyIsDown(65)) {
+        rotation -= speed;
+    } 
+      if (keyIsDown(68)) {
+        rotation += speed;
+    }
+    iHat = [cos(radians(rotation)),sin(radians(rotation))/2];
+    jHat = [-sin(radians(rotation)),cos(radians(rotation))/2];
+    tiles.sort((a, b) => {
+        let ay = Matrix(a.x, a.y)[1];
+        let by = Matrix(b.x, b.y)[1];
+        return ay - by;
+    });
+}
+function setup(){
+    genTiles();
+    createCanvas(windowWidth, windowHeight);
+}
+function windowResized(){
+    resizeCanvas(windowWidth, windowHeight);
+}
+function draw(){
+    translate(width/2,height/2);
+    background(92,181,225);
+    rotateIsland(2);
+    for(let i = 0; i < tiles.length; i++){
+        tiles[i].draw();
+    }
+}
