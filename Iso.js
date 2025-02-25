@@ -2,20 +2,12 @@ document.addEventListener('contextmenu', event => event.preventDefault());
 //scale of individual grids.
 const gridsize = 100;
 //actual grid set size = islandSize*islandSize.
-let islandSize = 3;
-//a float between 0-. the angle at which the camera veiws the island.
-let angleRatio = 0.5;
+let islandSize = 9;
+//a float between 0-1. the angle at which the camera veiws the island.
+let angle = 0.1;
 
 let rotation = 0;
-//Initial x/y:iHat/jHat
-/*Written as a vector   |M1|
-M1/M2|run/rise          |M2|
-*/
-//expected ratios of iHat at 45 degrees[1,0.5]
-//expected ratios of iHat at 0 degrees:[1,0]
 let iHat = [1,0];
-//expected ratios of jHat at 45 degrees[-1,0.5]
-//expected ratios of jHat at 0 degrees:[0,.5]
 let jHat = [0,.5];
 
 let tiles =[];
@@ -38,10 +30,10 @@ class Tile{
             push();
             noStroke();
             fill(20,120,50);
-            quad(a[0],a[1], a[0],a[1]+g, d[0],d[1]+g, d[0],d[1]);
-            quad(a[0],a[1], a[0],a[1]+g, b[0],b[1]+g, b[0],b[1]);
-            quad(c[0],c[1], c[0],c[1]+g, d[0],d[1]+g, d[0],d[1]);
-            quad(c[0],c[1], c[0],c[1]+g, b[0],b[1]+g, b[0],b[1]);
+            quad(a[0],a[1], a[0],a[1]+(1-angle)*gridsize, d[0],d[1]+(1-angle)*gridsize, d[0],d[1]);
+            quad(a[0],a[1], a[0],a[1]+(1-angle)*gridsize, b[0],b[1]+(1-angle)*gridsize, b[0],b[1]);
+            quad(c[0],c[1], c[0],c[1]+(1-angle)*gridsize, d[0],d[1]+(1-angle)*gridsize, d[0],d[1]);
+            quad(c[0],c[1], c[0],c[1]+(1-angle)*gridsize, b[0],b[1]+(1-angle)*gridsize, b[0],b[1]);
             stroke(this.mouseHover() ? [255, 255, 0] : [20, 220, 50]);
             fill(this.mouseHover() ? [255, 255, 0] : [20, 220, 50]);
             quad(a[0],a[1], b[0],b[1], c[0],c[1], d[0],d[1]);
@@ -86,17 +78,24 @@ function genTiles(){
 function rotateIsland(speed){
     if (keyIsDown(65)) {
         rotation -= speed;
-    } 
+    }
       if (keyIsDown(68)) {
         rotation += speed;
     }
-    iHat = [cos(radians(rotation)),sin(radians(rotation))*angleRatio];
-    jHat = [-sin(radians(rotation)),cos(radians(rotation))*angleRatio];
+    iHat = [cos(radians(rotation)),sin(radians(rotation))*angle];
+    jHat = [-sin(radians(rotation)),cos(radians(rotation))*angle];
     tiles.sort((a, b) => {
         let ay = Matrix(a.x, a.y)[1];
         let by = Matrix(b.x, b.y)[1];
         return ay - by;
     });
+    let angularSpeed = 0.01;
+    if (keyIsDown(87)&& angle <= 1-angularSpeed) {
+        angle += angularSpeed;
+    }
+    if (keyIsDown(83)&& angle > 0+2*angularSpeed) {
+        angle -= angularSpeed;
+    }
 }
 function setup(){
     genTiles();
