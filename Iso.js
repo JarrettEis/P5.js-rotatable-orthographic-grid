@@ -1,14 +1,16 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 //scale of individual grids.
 const gridsize = 100;
+let characteSsize = 10;
 //actual grid set size = islandSize*islandSize.
 let islandSize = 9;
 //a float between 0-1. the angle at which the camera veiws the island.
-let angle = 0.1;
+let angle = 0.5;
+let angularSpeed = 0.02;
 
 let rotation = 0;
 let iHat = [1,0];
-let jHat = [0,.5];
+let jHat = [0,0.5];
 
 let tiles =[];
 class Tile{
@@ -53,6 +55,27 @@ class Tile{
         );
     }
 }
+let characters =[];
+class Character{
+    constructor(){
+        this.x = 0;
+        this.y = 0;
+        this.captain = false;
+        this.enemy = false;
+        this.type = "base";
+    }
+    draw(){
+        let m = Matrix(this.x,this.y);
+        let size = characterSize;
+        let h =
+        push();
+        stroke();
+        fill();
+        elipse();
+        pop();
+    }
+}
+
 function Matrix(x,y){
     let r = [x*iHat[0] + y*jHat[0], x*iHat[1] + y*jHat[1]];
     return r;
@@ -89,7 +112,6 @@ function rotateIsland(speed){
         let by = Matrix(b.x, b.y)[1];
         return ay - by;
     });
-    let angularSpeed = 0.01;
     if (keyIsDown(87)&& angle <= 1-angularSpeed) {
         angle += angularSpeed;
     }
