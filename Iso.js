@@ -1,11 +1,14 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 //scale of individual grids.
+const startingDudeAmount=1;
 const gridsize = 100;
-let characteSize = 10;
+const characteSize = 10;
 //actual grid set size = islandSize*islandSize.
-let islandSize = 5;
+let islandSize =15;
 // Width of water surrounding the land
-let waterWidth = 5;
+let weight = 40;
+let waterWidth = 1;
+let oceanSize = 1000*10;
 // Total size of the grid
 let gridSizeWithWater = islandSize + (waterWidth * 2);
 //a float between 0-1. the angle at which the camera veiws the island.
@@ -21,10 +24,10 @@ class Tile {
     constructor() {
         this.x = 0;
         this.y = 0;
-        this.height = this.type === "water" ? -gridsize * 0.5 : 0; // Default height for water is slightly lower
-        this.type = "water"; // Possible types: land, water, elevation, slope
+        this.height = 0;
+        this.type = "water";
+        this.noise = 0;
     }
-
     draw() {
         let g = gridsize / 2;
         let a = Matrix(this.x - g, this.y - g);
@@ -33,46 +36,40 @@ class Tile {
         let d = Matrix(this.x + g, this.y - g);
 
         if (this.type === "water") {
+            this.noise = noise(frameCount*(weight/500)+this.x+this.y)*weight;
+            this.height = (1 - angle) * -((gridsize * 0.1)+this.noise);
             push();
-            stroke(92, 181, 225);
-            fill(92, 181, 225);
-            // Adjust water height using the `this.height` property
-            let waterLevel = this.height + (1 - angle) * gridsize * 0.5;
-
-            quad(a[0], a[1] + waterLevel, a[0], a[1] + (1 - angle) * gridsize + waterLevel,
-                d[0], d[1] + (1 - angle) * gridsize + waterLevel, d[0], d[1] + waterLevel);
-            quad(a[0], a[1] + waterLevel, a[0], a[1] + (1 - angle) * gridsize + waterLevel,
-                b[0], b[1] + (1 - angle) * gridsize + waterLevel, b[0], b[1] + waterLevel);
-            quad(c[0], c[1] + waterLevel, c[0], c[1] + (1 - angle) * gridsize + waterLevel,
-                d[0], d[1] + (1 - angle) * gridsize + waterLevel, d[0], d[1] + waterLevel);
-            quad(c[0], c[1] + waterLevel, c[0], c[1] + (1 - angle) * gridsize + waterLevel,
-                b[0], b[1] + (1 - angle) * gridsize + waterLevel, b[0], b[1] + waterLevel);
-            quad(a[0], a[1] + waterLevel, b[0], b[1] + waterLevel, c[0], c[1] + waterLevel, d[0], d[1] + waterLevel);
-
+            stroke(54, 141, 197);
+            fill(54, 141, 197);
+            quad(a[0], a[1] - this.height, a[0], a[1] + (1 - angle) * gridsize - this.height,
+                d[0], d[1] + (1 - angle) * gridsize - this.height, d[0], d[1] - this.height);
+            quad(a[0], a[1] - this.height, a[0], a[1] + (1 - angle) * gridsize - this.height,
+                b[0], b[1] + (1 - angle) * gridsize - this.height, b[0], b[1] - this.height);
+            quad(c[0], c[1] - this.height, c[0], c[1] + (1 - angle) * gridsize - this.height,
+                d[0], d[1] + (1 - angle) * gridsize - this.height, d[0], d[1] - this.height);
+            quad(c[0], c[1] - this.height, c[0], c[1] + (1 - angle) * gridsize - this.height,
+                b[0], b[1] + (1 - angle) * gridsize - this.height, b[0], b[1] - this.height);
+            quad(a[0], a[1] - this.height, b[0], b[1] - this.height, c[0], c[1] - this.height, d[0], d[1] - this.height);
             pop();
         } else {
             push();
             noStroke();
             fill(20, 120, 50);
-            
-            let landHeight = this.height; // Use height for land adjustments
-            
-            quad(a[0], a[1] + landHeight, a[0], a[1] + (1 - angle) * gridsize + landHeight,
-                d[0], d[1] + (1 - angle) * gridsize + landHeight, d[0], d[1] + landHeight);
-            quad(a[0], a[1] + landHeight, a[0], a[1] + (1 - angle) * gridsize + landHeight,
-                b[0], b[1] + (1 - angle) * gridsize + landHeight, b[0], b[1] + landHeight);
-            quad(c[0], c[1] + landHeight, c[0], c[1] + (1 - angle) * gridsize + landHeight,
-                d[0], d[1] + (1 - angle) * gridsize + landHeight, d[0], d[1] + landHeight);
-            quad(c[0], c[1] + landHeight, c[0], c[1] + (1 - angle) * gridsize + landHeight,
-                b[0], b[1] + (1 - angle) * gridsize + landHeight, b[0], b[1] + landHeight);
+            quad(a[0], a[1] + this.height, a[0], a[1] + (1 - angle) * gridsize + this.height,
+                d[0], d[1] + (1 - angle) * gridsize + this.height, d[0], d[1] + this.height);
+            quad(a[0], a[1] + this.height, a[0], a[1] + (1 - angle) * gridsize + this.height,
+                b[0], b[1] + (1 - angle) * gridsize + this.height, b[0], b[1] + this.height);
+            quad(c[0], c[1] + this.height, c[0], c[1] + (1 - angle) * gridsize + this.height,
+                d[0], d[1] + (1 - angle) * gridsize + this.height, d[0], d[1] + this.height);
+            quad(c[0], c[1] + this.height, c[0], c[1] + (1 - angle) * gridsize + this.height,
+                b[0], b[1] + (1 - angle) * gridsize + this.height, b[0], b[1] + this.height);
             stroke(this.mouseHover() ? [255, 255, 0] : [20, 220, 50]);
             fill(this.mouseHover() ? [255, 255, 0] : [20, 220, 50]);
-            quad(a[0], a[1] + landHeight, b[0], b[1] + landHeight, c[0], c[1] + landHeight, d[0], d[1] + landHeight);
+            quad(a[0], a[1] + this.height, b[0], b[1] + this.height, c[0], c[1] + this.height, d[0], d[1] + this.height);
 
             pop();
         }
     }
-
     mouseHover() {
         let mx = mouseX - width / 2;
         let my = mouseY - height / 2;
@@ -86,8 +83,8 @@ class Tile {
     }
 }
 
-let characters =[];
-class Character{
+let dudes =[];
+class Dude{
     constructor(){
         this.x = 0;
         this.y = 0;
@@ -100,9 +97,9 @@ class Character{
         let size = characterSize;
         let h =
         push();
-        stroke();
-        fill();
-        elipse();
+        stroke("red");
+        fill("red");
+        ellipse(m[1],m[1],size,size*(1-angle));
         pop();
     }
 }
@@ -151,6 +148,11 @@ function genTiles() {
         }
     }
 }
+function genDudes(){
+    for (let i = 0; i < (startingDudeAmount); i++) {
+        dudes[i] = new Dude();
+    }
+}
 function rotateIsland(speed){
     if (keyIsDown(65)) {
         rotation -= speed;
@@ -172,8 +174,19 @@ function rotateIsland(speed){
         angle -= angularSpeed;
     }
 }
+function drawOcean() {
+    let h = (angle/0.5)*(height)
+    push();
+    noStroke();
+    rectMode(CORNERS);
+    fill(54, 141, 197);
+    rect(-width/2,-h,width/2,height/2);
+
+    pop();
+}
 function setup(){
     genTiles();
+    genDudes();
     createCanvas(windowWidth, windowHeight);
 }
 function windowResized(){
@@ -181,9 +194,13 @@ function windowResized(){
 }
 function draw(){
     translate(width/2,height/2);
-    background("white");
+    background(135,206,235);
+    drawOcean();
     rotateIsland(2);
     for(let i = 0; i < tiles.length; i++){
         tiles[i].draw();
+    }
+    for(let i = 0; i < dudes.length; i++){
+        dudes[i].draw();
     }
 }
