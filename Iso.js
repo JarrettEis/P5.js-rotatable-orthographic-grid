@@ -1,8 +1,8 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 //scale of individual grids.
-const startingDudeAmount=1;
+const startingDudeAmount=5;
 const gridsize = 100;
-const characteSize = 10;
+const characterSize = 20;
 //actual grid set size = islandSize*islandSize.
 let islandSize =15;
 // Width of water surrounding the land
@@ -86,21 +86,35 @@ class Tile {
 let dudes =[];
 class Dude{
     constructor(){
-        this.x = 0;
-        this.y = 0;
+        this.x = 100;
+        this.y = 300;
         this.captain = false;
         this.enemy = false;
-        this.type = "base";
+        this.type = "base"; // "base", "captain", or "enemy"
     }
     draw(){
         let m = Matrix(this.x,this.y);
         let size = characterSize;
-        let h =
-        push();
-        stroke("red");
-        fill("red");
-        ellipse(m[1],m[1],size,size*(1-angle));
-        pop();
+        let h = 2 - angle;
+        if (this.type === "base") {
+            push();
+            stroke("black");
+            fill("white");
+            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
+            pop();
+        } else if (this.type === "captain") {
+            push();
+            stroke("black");
+            fill("blue");
+            ellipse(m[0], m[1], size, size * h);
+            pop();
+        } else if (this.type === "enemy") {
+            push();
+            stroke("black");
+            fill("red");
+            ellipse(m[0], m[1], size, size * h);
+            pop();
+        }
     }
 }
 
@@ -148,9 +162,18 @@ function genTiles() {
         }
     }
 }
-function genDudes(){
-    for (let i = 0; i < (startingDudeAmount); i++) {
-        dudes[i] = new Dude();
+function genDudes() {
+    for (let i = 0; i < startingDudeAmount; i++) {
+        let dude = new Dude();
+        // Generate random positions within the island bounds
+        let randomRow = Math.floor(Math.random() * islandSize);
+        let randomCol = Math.floor(Math.random() * islandSize);
+
+        // Calculate the actual position on the grid
+        dude.x = (randomCol + waterWidth) * gridsize - (gridSizeWithWater - 1) * gridsize / 2;
+        dude.y = (randomRow + waterWidth) * gridsize - (gridSizeWithWater - 1) * gridsize / 2;
+
+        dudes.push(dude); // Add the Dude to the array
     }
 }
 function rotateIsland(speed){
@@ -170,7 +193,7 @@ function rotateIsland(speed){
     if (keyIsDown(87)&& angle <= 1-angularSpeed) {
         angle += angularSpeed;
     }
-    if (keyIsDown(83)&& angle > 0+2*angularSpeed) {
+    if (keyIsDown(83)&& angle > 2*angularSpeed) {
         angle -= angularSpeed;
     }
 }
@@ -192,15 +215,26 @@ function setup(){
 function windowResized(){
     resizeCanvas(windowWidth, windowHeight);
 }
-function draw(){
-    translate(width/2,height/2);
-    background(135,206,235);
+function draw() {
+    translate(width / 2, height / 2);
+    background(135, 206, 235);
     drawOcean();
     rotateIsland(2);
-    for(let i = 0; i < tiles.length; i++){
+
+    // Draw tiles
+    for (let i = 0; i < tiles.length; i++) {
         tiles[i].draw();
     }
-    for(let i = 0; i < dudes.length; i++){
+
+    // Sort dudes by their screen-space y position (closest ones first)
+    dudes.sort((a, b) => {
+        let ay = Matrix(a.x, a.y)[1];
+        let by = Matrix(b.x, b.y)[1];
+        return ay - by;
+    });
+
+    // Draw dudes
+    for (let i = 0; i < dudes.length; i++) {
         dudes[i].draw();
     }
 }
