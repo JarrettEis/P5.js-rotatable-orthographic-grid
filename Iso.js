@@ -1,14 +1,14 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 //scale of individual grids.
-const startingDudeAmount=5;
+const startingDudeAmount=10;
+const numberOfCaptains = 1;
 const gridsize = 100;
 const characterSize = 20;
 //actual grid set size = islandSize*islandSize.
-let islandSize =15;
+let islandSize =9;
 // Width of water surrounding the land
 let weight = 40;
 let waterWidth = 1;
-let oceanSize = 1000*10;
 // Total size of the grid
 let gridSizeWithWater = islandSize + (waterWidth * 2);
 //a float between 0-1. the angle at which the camera veiws the island.
@@ -90,29 +90,43 @@ class Dude{
         this.y = 300;
         this.captain = false;
         this.enemy = false;
-        this.type = "base"; // "base", "captain", or "enemy"
+        this.type = "base";
     }
     draw(){
         let m = Matrix(this.x,this.y);
         let size = characterSize;
         let h = 2 - angle;
-        if (this.type === "base") {
+        if (this.type === "base" && !this.captain && !this.enemy) {
             push();
             stroke("black");
-            fill("white");
+            fill("black");
+            ellipse(m[0], m[1], size, size * (angle));
+            fill(0,191,255);
             ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
             pop();
-        } else if (this.type === "captain") {
+        } else if (this.type === "base" && this.captain && !this.enemy) {
             push();
             stroke("black");
-            fill("blue");
-            ellipse(m[0], m[1], size, size * h);
+            fill("black");
+            ellipse(m[0], m[1], size, size * (angle));
+            fill(10,50,128);
+            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
             pop();
-        } else if (this.type === "enemy") {
+        } else if (this.type === "base" && !this.captain && this.enemy) {
             push();
             stroke("black");
+            fill("black");
+            ellipse(m[0], m[1], size, size * (angle));
             fill("red");
-            ellipse(m[0], m[1], size, size * h);
+            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
+            pop();
+        } else if (this.type === "base" && this.captain && this.enemy) {
+            push();
+            stroke("black");
+            fill("black");
+            ellipse(m[0], m[1], size, size * (angle));
+            fill("orange");
+            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
             pop();
         }
     }
@@ -163,15 +177,35 @@ function genTiles() {
     }
 }
 function genDudes() {
+    let occupiedTiles = []; // Keep track of occupied tiles
+
     for (let i = 0; i < startingDudeAmount; i++) {
         let dude = new Dude();
-        // Generate random positions within the island bounds
-        let randomRow = Math.floor(Math.random() * islandSize);
-        let randomCol = Math.floor(Math.random() * islandSize);
+        
+        // Set the first 'numberOfCaptains' dudes as captains
+        if (i < numberOfCaptains) {
+            dude.captain = true;
+        }
 
-        // Calculate the actual position on the grid
-        dude.x = (randomCol + waterWidth) * gridsize - (gridSizeWithWater - 1) * gridsize / 2;
-        dude.y = (randomRow + waterWidth) * gridsize - (gridSizeWithWater - 1) * gridsize / 2;
+        let validPosition = false;
+        while (!validPosition) {
+            // Generate random positions within the island bounds
+            let randomRow = Math.floor(Math.random() * islandSize);
+            let randomCol = Math.floor(Math.random() * islandSize);
+
+            // Calculate the actual position on the grid
+            let x = (randomCol + waterWidth) * gridsize - (gridSizeWithWater - 1) * gridsize / 2;
+            let y = (randomRow + waterWidth) * gridsize - (gridSizeWithWater - 1) * gridsize / 2;
+
+            // Check if the position is already occupied
+            let positionKey = `${x},${y}`;
+            if (!occupiedTiles.includes(positionKey)) {
+                dude.x = x;
+                dude.y = y;
+                occupiedTiles.push(positionKey); // Mark this tile as occupied
+                validPosition = true;
+            }
+        }
 
         dudes.push(dude); // Add the Dude to the array
     }
