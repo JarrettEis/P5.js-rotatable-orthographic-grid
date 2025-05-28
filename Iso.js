@@ -237,6 +237,11 @@ function mousePressed() {
         if (tiles[i].mouseHover()) {
             let clickedTile = tiles[i];
 
+            // Skip if the tile is water
+            if (clickedTile.type === "water") {
+                return; // Exit the function if a water tile is clicked
+            }
+
             // Check if any dude is on the clicked tile
             let dudeOnTile = dudes.find(dude => dude.x === clickedTile.x && dude.y === clickedTile.y);
 
