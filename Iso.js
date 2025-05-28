@@ -5,7 +5,7 @@ const numberOfCaptains = 1;
 const gridsize = 100;
 const characterSize = 20;
 //actual grid set size = islandSize*islandSize.
-let islandSize =9;
+let islandSize = 9;
 // Width of water surrounding the land
 let weight = 40;
 let waterWidth = 1;
@@ -82,56 +82,53 @@ class Tile {
         );
     }
 }
-
 let dudes =[];
-class Dude{
-    constructor(){
+class Dude {
+    constructor() {
         this.x = 100;
         this.y = 300;
         this.captain = false;
         this.enemy = false;
         this.type = "base";
+        this.isSelected = false;
+        this.isClicked = false; // New property
     }
-    draw(){
-        let m = Matrix(this.x,this.y);
+
+    draw() {
+        let m = Matrix(this.x, this.y);
         let size = characterSize;
         let h = 2 - angle;
+
+        push();
+        stroke("black");
+        fill("black");
+        ellipse(m[0], m[1], size, size * (angle));
+        // Base color
+        let baseColor;
         if (this.type === "base" && !this.captain && !this.enemy) {
-            push();
-            stroke("black");
-            fill("black");
-            ellipse(m[0], m[1], size, size * (angle));
-            fill(0,191,255);
-            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
-            pop();
+            baseColor = color(0, 128, 0); // Green
         } else if (this.type === "base" && this.captain && !this.enemy) {
-            push();
-            stroke("black");
-            fill("black");
-            ellipse(m[0], m[1], size, size * (angle));
-            fill(10,50,128);
-            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
-            pop();
+            baseColor = color(0, 0, 255); // Blue
         } else if (this.type === "base" && !this.captain && this.enemy) {
-            push();
-            stroke("black");
-            fill("black");
-            ellipse(m[0], m[1], size, size * (angle));
-            fill("red");
-            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
-            pop();
+            baseColor = color(255, 0, 0); // Red
         } else if (this.type === "base" && this.captain && this.enemy) {
-            push();
-            stroke("black");
-            fill("black");
-            ellipse(m[0], m[1], size, size * (angle));
-            fill("orange");
-            ellipse(m[0], m[1]-(20*(1-angle)), size, size * h);
-            pop();
+            baseColor = color(255, 165, 0); // Orange
+        } else {
+            baseColor = color(0); // Default black
         }
+        if (this.isClicked) {
+            baseColor = color(
+                red(baseColor) + 50,
+                green(baseColor) + 50,
+                blue(baseColor) + 50
+            );
+        }
+
+        fill(baseColor);
+        ellipse(m[0], m[1] - (20 * (1 - angle)), size, size * h);
+        pop();
     }
 }
-
 function Matrix(x,y){
     let r = [x*iHat[0] + y*jHat[0], x*iHat[1] + y*jHat[1]];
     return r;
@@ -229,6 +226,37 @@ function rotateIsland(speed){
     }
     if (keyIsDown(83)&& angle > 2*angularSpeed) {
         angle -= angularSpeed;
+    }
+}
+function mousePressed() {
+    let mx = mouseX - width / 2;
+    let my = mouseY - height / 2;
+
+    // Find the clicked tile
+    for (let i = 0; i < tiles.length; i++) {
+        if (tiles[i].mouseHover()) {
+            let clickedTile = tiles[i];
+
+            // Check if any dude is on the clicked tile
+            let dudeOnTile = dudes.find(dude => dude.x === clickedTile.x && dude.y === clickedTile.y);
+
+            if (dudeOnTile && !dudeOnTile.enemy) {
+                // If a non-enemy dude is on the tile, select that dude
+                for (let j = 0; j < dudes.length; j++) {
+                    dudes[j].isClicked = false; // Deselect all dudes
+                }
+                dudeOnTile.isClicked = true; // Select the dude on the clicked tile
+            } else if (!dudeOnTile) {
+                // If no dude is on the tile, move the selected dude to this tile
+                let selectedDude = dudes.find(dude => dude.isClicked && !dude.enemy);
+                if (selectedDude) {
+                    selectedDude.x = clickedTile.x;
+                    selectedDude.y = clickedTile.y;
+                    selectedDude.isClicked = false; // Unselect the dude after moving
+                }
+            }
+            break; // Stop checking other tiles
+        }
     }
 }
 function drawOcean() {
